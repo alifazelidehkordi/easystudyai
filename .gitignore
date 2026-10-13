@@ -4,6 +4,7 @@ course/processed/
 course/visuals/
 course/sessions/
 course/briefs/
+course/validation/
 course/progress.json
 .pi/
 .venv/

@@ -6,7 +6,7 @@
 - **Portable.** `AGENTS.md` plus `.agents/skills/` works without a custom backend. Both Pi and Codex can discover these skills; other harnesses can read the same files.
 - **Professor notes first.** Local PDF, PowerPoint, Word and text import, with page/slide references and saved embedded figures.
 - **Probe → Plan → Teach.** One concept at a time, interactive recall and clinically relevant explanations, with source labels.
-- **Visual learning.** Find and cite figures/page renderings already imported from lectures using `scripts/figures.py`; add separately researched, attributed medical images when permitted. These utilities do **not** call any AI API.
+- **Visual learning.** Find professor figures first; create source-anchored requests for external images, then require real medical and licensing review before an approved embed. All scripts operate without AI/image APIs.
 - **Retention.** Persist questions sourced to exact lecture pages/slides in a simple, fully local spaced review queue; the tutor must use real learner answers to schedule revisions.
 - **Optional Pi UI.** Interactive quizzes and Obsidian-style session log extension from the *original* repository, fetched explicitly by the user, not bundled or hardwired.
 
@@ -75,7 +75,15 @@ python scripts/import_notes.py "course/lectures/My slides.pptx"
 python scripts/import_notes.py "course/lectures/My handout.docx"
 ```
 
-The importer writes `course/processed/my-lecture-pdf.md` or similarly named output, with human-readable page/slide markers. Search across your imported lecture sections locally with `python scripts/search_notes.py "renal blood flow"`. PDF page snapshots and embedded figures are saved next to processed notes under `assets/`. **No OCR is performed**; scanned pages, charts, labels and complex document layouts need careful review against originals. All conversion is local; no model API calls.
+The importer writes `course/processed/my-lecture-pdf.md` or similarly named output, with human-readable page/slide markers. **Before starting a teaching session**, run the local quality check; it highlights pages without readable text and missing image files:
+
+```bash
+python scripts/audit_lecture.py
+python scripts/audit_lecture.py course/processed/my-lecture-pdf.md --json
+python scripts/audit_lecture.py --strict  # returns code 2 when significant gaps exist
+```
+
+This is a **technical extraction check, not medical fact checking**. Search across your imported lecture sections locally with `python scripts/search_notes.py "renal blood flow"`. PDF page snapshots and embedded figures are saved next to processed notes under `assets/`. **No OCR is performed**; scanned pages, charts, labels and complex document layouts need careful review against originals. All conversion is local; no model API calls.
 
 Prompt your tutor:
 
@@ -118,20 +126,45 @@ Try these requests in Codex/Pi:
 
 > Teach the next section of my renal physiology lecture. When we're done, create 2–3 source-anchored review questions for the concepts I need to remember.
 
-## Add medical images (no search API required)
+## Add medical images when they help (no search API required)
 
-The tutor can use its existing web tools, when available, to **find candidate images**. Only choose an image after checking anatomical accuracy, attribution, usage rights, and privacy. Download it to your computer with the appropriate permission, then record the source locally:
+The tutor can now maintain a **source-anchored visual request queue**. It will first look for the professor's figure, then create an external-image request only if the figure is missing or insufficient.
+
+For example, after importing a histology lecture:
 
 ```bash
-python scripts/add_image.py \
-  --file /path/to/approved-image.png \
-  --title "Renal corpuscle histology" \
-  --source-url "https://example.org/original-image-page" \
-  --creator "Photographer or organization" \
-  --license "CC BY 4.0"
+python scripts/visual_requests.py request \
+  --source kidney-pdf.md --anchor "Page 4" \
+  --topic "normal renal corpuscle PAS histology" \
+  --kind histology --reason "Need an annotated microscopic comparison"
+
+python scripts/visual_requests.py list
+python scripts/visual_requests.py search --query "renal corpuscle histology"
 ```
 
-The script copies the picture to `course/visuals/`, writes a metadata JSON file and maintains `ATTRIBUTIONS.md`. It explicitly marks pictures **unverified** until human review. Do not use the example URL as a real attribution. Original lecture figures and Mermaid diagrams require no external search.
+The source **must already exist** in `course/processed/` and the page/slide heading must be real. Replace `kidney-pdf.md` and `Page 4` with the actual filename/heading from your notes.
+
+The search command outputs a regular **Wikimedia Commons MediaSearch web link**, not scraped image results. Open it in a browser (or let a harness with built-in web browsing inspect it), check the image itself, and download it only with permission. This workflow has **no external image-search API, credentials, separate AI provider, or API billing**.
+
+Once you find a suitable picture with identifiable creator, license and source:
+
+```bash
+python scripts/visual_requests.py attach REQUEST_ID \
+  --file /path/to/downloaded.png \
+  --title "Renal corpuscle, PAS stain" \
+  --source-url "https://real-original-image-page" \
+  --creator "Actual creator" --license "Actual license"
+
+# After a real person checks anatomy/histology and reuse rights:
+python scripts/visual_requests.py approve REQUEST_ID --checked-medical --checked-rights
+
+# Only now will it output an approved Markdown embed + attribution:
+python scripts/visual_requests.py embed REQUEST_ID
+```
+
+**Important:** These commands record human review of accuracy and rights; the software does not independently validate either. Do not claim a picture was inspected when it was not, do not treat an external image as your professor's slide, and never include patient-identifying imagery. The image and request history are locally saved under ignored `course/visuals/` and `course/visual_requests.json`.
+
+For images unrelated to one particular slide, `python scripts/add_image.py` remains available as a simple local image cataloging utility. It does not search, check reuse rights automatically or guarantee scientific accuracy.
 
 ## Project files
 
@@ -146,8 +179,11 @@ course/processed/                Searchable imported notes (gitignored)
 course/visuals/                  Medical image library (gitignored)
 course/sessions/                 Lesson logs (gitignored)
 scripts/import_notes.py          Offline lecture converter
+scripts/audit_lecture.py         Flag scan-only pages or broken embedded images
 scripts/search_notes.py          Keyword retrieval with page/slide anchors
 scripts/figures.py               Find local figures/page snapshots by slide/page
+scripts/visual_requests.py       Request → search link → attach → review → embed
+course/visual_requests.json      Private pending/approved visual requests (gitignored)
 scripts/study.py                 Store source-linked review questions and due dates
 course/progress.json             Private review progress (gitignored)
 scripts/add_image.py             Offline image/citation library helper
@@ -164,6 +200,6 @@ The tests do not need API keys; PDF and slides tests run when the optional docum
 
 ## Important limits
 
-This is an **initial working foundation**, not a validated clinical education platform. Images and external claims are not medically certified by software. A local interval-based spaced-review scheduler is included; there is no cloud scheduling or reminder service, automatic medical image verifier, built-in web scraper or OCR yet. The original professor files stay on your machine; however, the **text/images the AI reads may be sent to the subscribed Codex/ChatGPT service**. Do not include identifiable real patient data. Course content is not clinical advice.
+This is an **initial working foundation**, not a validated clinical education platform. Images and external claims are not medically certified by software. A local interval-based spaced-review scheduler is included; there is no cloud scheduling or reminder service, automatic medical image verifier, image search API, built-in web scraper or OCR yet. External medical pictures still require manual review and a suitable harness/browser. The original professor files stay on your machine; however, the **text/images the AI reads may be sent to the subscribed Codex/ChatGPT service**. Do not include identifiable real patient data. Course content is not clinical advice.
 
 Reference documentation: [Pi skills](https://pi.dev/docs/latest/skills) · [Pi authentication](https://pi.dev/docs/latest/models) · [Codex](https://github.com/openai/codex) · [Original teaching system](https://github.com/amosblomqvist/learn).

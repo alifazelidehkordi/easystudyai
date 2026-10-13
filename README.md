@@ -6,7 +6,8 @@
 - **Portable.** `AGENTS.md` plus `.agents/skills/` works without a custom backend. Both Pi and Codex can discover these skills; other harnesses can read the same files.
 - **Professor notes first.** Local PDF, PowerPoint, Word and text import, with page/slide references and saved embedded figures.
 - **Probe → Plan → Teach.** One concept at a time, interactive recall and clinically relevant explanations, with source labels.
-- **Visual learning.** Original lecture figures first; then attributed medical images gathered using whatever browsing/research functionality your harness already supports. The local `add_image.py` utility does **not** call any API.
+- **Visual learning.** Find and cite figures/page renderings already imported from lectures using `scripts/figures.py`; add separately researched, attributed medical images when permitted. These utilities do **not** call any AI API.
+- **Retention.** Persist questions sourced to exact lecture pages/slides in a simple, fully local spaced review queue; the tutor must use real learner answers to schedule revisions.
 - **Optional Pi UI.** Interactive quizzes and Obsidian-style session log extension from the *original* repository, fetched explicitly by the user, not bundled or hardwired.
 
 ## Quick start: Codex CLI (simplest)
@@ -48,6 +49,20 @@ Then inside Pi: `/md-log course/sessions/cardiac-cycle.md`. The setup copies onl
 
 The original project's code is **not vendored** here (check its rights/terms). Popup functionality depends on the installed Pi version; if unavailable, use chat quizzes and Markdown files without changing the learning logic.
 
+## Try a complete local demo (without uploading any real lecture)
+
+```bash
+python scripts/import_notes.py examples/demo-lecture.txt
+python scripts/search_notes.py "stroke volume"
+python scripts/study.py add --topic "Cardiac output" \
+  --question "What determines cardiac output?" \
+  --answer "Heart rate multiplied by stroke volume" \
+  --source demo-lecture-txt.md --anchor "Source text"
+python scripts/study.py due
+```
+
+Then run `codex` (or `pi`) and request: **"Read AGENTS.md, teach the demo lecture and quiz me. Help me work through my due review cards."** The synthetic demo is not a medical course handout.
+
 ## Import a professor's lecture
 
 Put a lecture into the **ignored** `course/lectures/` directory (create it if necessary) and customize `course/COURSE.md`.
@@ -65,6 +80,43 @@ The importer writes `course/processed/my-lecture-pdf.md` or similarly named outp
 Prompt your tutor:
 
 > Read course/COURSE.md and the imported lecture on renal physiology. Map what my professor expects, ask a few diagnostic questions, show me the plan and wait for approval. Teach with diagrams and figure citations. Flag anything you add from outside the lecture.
+
+## Find figures inside your professor's notes
+
+Import a PDF with `--render-pages` so **each page has a reviewable image**, or import PowerPoint to extract most inline picture objects. The figure index reports the exact lecture page/slide, which images exist, and where the files are:
+
+```bash
+python scripts/figures.py --query "renal cortex"
+python scripts/figures.py --json --limit 15
+```
+
+**Important:** This indexes Markdown image links, not the actual visual meaning of an image. Search matches text on the same page/slide; the assistant must **look at the original image** before using it to teach. PowerPoint grouped shapes, charts and scanned images may require manual inspection.
+
+## Review what you learned across sessions
+
+After teaching you from a professor's lecture, the tutor can save a short fact/reasoning question with a verified slide/page citation. Review questions and your history are saved locally in the ignored `course/progress.json` file.
+
+```bash
+# The source and anchor must exist in course/processed/
+python scripts/study.py add \
+  --topic "Cardiac cycle" \
+  --question "What event closes the aortic valve?" \
+  --answer "Left ventricular pressure falls below aortic pressure." \
+  --source heart-pdf.md \
+  --anchor "Page 5"
+
+python scripts/study.py due
+python scripts/study.py reveal CARD_ID
+python scripts/study.py grade CARD_ID --rating good
+python scripts/study.py stats
+```
+
+The `--source` name is the imported Markdown **basename**, not the original PDF filename; use the filename actually shown in `course/processed/`. Ratings: **again** = review today, **hard** = tomorrow without promotion, **good** = advance one interval, **easy** = advance two. You control the rating. The tutor must not assume you remember a fact simply because it taught you.
+
+Try these requests in Codex/Pi:
+> Show me my due review questions. Ask one at a time, don't reveal answers until I try, then record my rating.
+
+> Teach the next section of my renal physiology lecture. When we're done, create 2–3 source-anchored review questions for the concepts I need to remember.
 
 ## Add medical images (no search API required)
 
@@ -95,6 +147,9 @@ course/visuals/                  Medical image library (gitignored)
 course/sessions/                 Lesson logs (gitignored)
 scripts/import_notes.py          Offline lecture converter
 scripts/search_notes.py          Keyword retrieval with page/slide anchors
+scripts/figures.py               Find local figures/page snapshots by slide/page
+scripts/study.py                 Store source-linked review questions and due dates
+course/progress.json             Private review progress (gitignored)
 scripts/add_image.py             Offline image/citation library helper
 scripts/setup_pi.py              Optional import of upstream Pi UI extensions
 ```
@@ -109,6 +164,6 @@ The tests do not need API keys; PDF and slides tests run when the optional docum
 
 ## Important limits
 
-This is an **initial working foundation**, not a validated clinical education platform. Images and external claims are not medically certified by software. No automatic spaced-repetition scheduler, built-in web scraper or OCR is included yet. The original professor files stay on your machine; however, the **text/images the AI reads may be sent to the subscribed Codex/ChatGPT service**. Do not include identifiable real patient data. Course content is not clinical advice.
+This is an **initial working foundation**, not a validated clinical education platform. Images and external claims are not medically certified by software. A local interval-based spaced-review scheduler is included; there is no cloud scheduling or reminder service, automatic medical image verifier, built-in web scraper or OCR yet. The original professor files stay on your machine; however, the **text/images the AI reads may be sent to the subscribed Codex/ChatGPT service**. Do not include identifiable real patient data. Course content is not clinical advice.
 
 Reference documentation: [Pi skills](https://pi.dev/docs/latest/skills) · [Pi authentication](https://pi.dev/docs/latest/models) · [Codex](https://github.com/openai/codex) · [Original teaching system](https://github.com/amosblomqvist/learn).

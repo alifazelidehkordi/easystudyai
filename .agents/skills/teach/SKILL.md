@@ -18,7 +18,7 @@ For each step:
 1. Explain why this step is needed and connect it to established concepts.
 2. Use the simplest correct mechanism, definition, structure, or image. Distinguish normal physiology from pathology, and labels from analogies.
 3. Confirm the student understands with one high-signal question; explain why incorrect choices are wrong.
-4. Adjust difficulty before advancing. Add spaced retrieval targets at end of the session.
+4. Adjust difficulty before advancing. For high-yield material, create a small number of source-anchored review questions using the `review` skill and `python scripts/study.py add`. Only store questions checked against actual lecture anchors; never pretend a student passed a question they have not answered.
 
 ## By topic
 - Anatomy: spatial relations, direction/laterality, vessels, nerves, landmarks, anatomical variants. Use labeled figures when warranted.
@@ -26,6 +26,10 @@ For each step:
 - Physiology/biochemistry: mechanisms, feedback loops, causal reasoning, formulas when necessary.
 - Microbiology/pharmacology: mechanisms plus high-yield factual classifications, contraindications and source-dependent details.
 - Clinical vignettes: clearly hypothetical, explain reasoning; avoid patient-specific treatment advice.
+
+## Lecture figures
+
+Before looking for external graphics, use `python scripts/figures.py --query "topic"` to locate original slide images and PDF page renderings. Examine and cite original figures, including view, orientation and labeling, rather than guessing what an image depicts. The index itself does not analyze image content.
 
 ## Quiz design
 For MCQs, 3–5 plausible parallel options; build distractors from realistic misconceptions. Do not reveal the correct choice before the student responds. Mark source type ([lecture] or [supplementary]). If an interactive quiz tool is missing, ask a single question as plain chat.

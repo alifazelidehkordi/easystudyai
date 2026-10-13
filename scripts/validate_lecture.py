@@ -63,7 +63,12 @@ def inspect(imported: Path, original: Path | None = None) -> dict:
     if details["sections"] == 0:
         blockers.append("No page/slide/text sections detected.")
     if details["scan_warnings"]:
-        warnings.append("OCR was not performed; scanned pages require visual reading.")
+        warnings.append("Some scanned pages require visual reading; OCR may be absent.")
+    if details.get("ocr_sections"):
+        warnings.append(
+            "Local OCR was used on " + ", ".join(details["ocr_sections"]) +
+            ". Verify medical terms, units, laterality, doses and numbers against page images."
+        )
     if details["short_sections_to_check"]:
         warnings.append(
             "Low extracted text (may be normal title slides or image-heavy slides): " +
@@ -110,11 +115,13 @@ def inspect(imported: Path, original: Path | None = None) -> dict:
         "source_sections": details["sections"],
         "linked_figures": details["linked_visuals"],
         "no_text_sections": details["no_text_sections"],
+        "ocr_sections_needing_review": details.get("ocr_sections", []),
         "short_sections_to_check": details["short_sections_to_check"],
         "missing_images": details["missing_or_unsafe_images"],
         "blocking_issues": list(dict.fromkeys(blockers)),
         "warnings": list(dict.fromkeys(warnings)),
-        "technical_status": "needs_review" if blockers else "no_blockers_detected",
+        "technical_status": ("needs_review" if blockers or details.get("ocr_sections")
+                             else "no_blockers_detected"),
         "disclaimer": (
             "This is a local extraction/integrity audit, NOT a medical-content, "
             "clinical, figure-label, source-rights or privacy certification."
@@ -136,6 +143,7 @@ def report_markdown(result: dict) -> str:
         f"- Original file integrity: {result['original_validation']}",
         f"- Imported sections: {result['source_sections']}",
         f"- Linked figures/page renders: {result['linked_figures']}",
+        f"- OCR pages requiring visual confirmation: {len(result['ocr_sections_needing_review'])}",
         "",
         "## Must address before source-grounded teaching",
         "",

@@ -14,3 +14,6 @@ __pycache__/
 
 # Local visual research requests (possibly sensitive topic/lecture names)
 course/visual_requests.json*
+
+# Personal course configuration (do not accidentally publish professor details)
+course/LOCAL_COURSE.md

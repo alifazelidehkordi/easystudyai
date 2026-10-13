@@ -15,13 +15,14 @@ from validate_lecture import inspect, report_markdown
 
 
 def prepare(file: Path, notes: Path, briefs: Path, render_pages: bool = True,
-            force: bool = False) -> tuple[Path, Path, dict, list[str]]:
+            force: bool = False, ocr: bool = False, ocr_language: str = "eng",
+            tessdata: str | None = None) -> tuple[Path, Path, dict, list[str]]:
     # Avoid accidentally sharing private course originals in a repository.
     if file.is_symlink():
         raise ValueError("Symlink lecture source not accepted")
     output, n, warnings = convert(
         file, notes, render_pages=render_pages and file.suffix.lower() == ".pdf",
-        overwrite=force
+        overwrite=force, ocr=ocr, ocr_language=ocr_language, tessdata=tessdata
     )
     brief, metrics = create_brief(output, briefs, overwrite=force)
     return output, brief, metrics, warnings
@@ -33,15 +34,24 @@ def main() -> int:
     parser.add_argument("--notes", type=Path, default=Path("course/processed"))
     parser.add_argument("--briefs", type=Path, default=Path("course/briefs"))
     parser.add_argument("--validation", type=Path, help="Report folder (default: alongside briefs)")
+    parser.add_argument("--ocr", action="store_true",
+                        help="Use local Tesseract OCR for scan-only PDF pages; opt-in")
+    parser.add_argument("--ocr-lang", default="eng",
+                        help="Tesseract language pack; e.g. eng or ita")
+    parser.add_argument("--tessdata", default=None,
+                        help="Path to local Tesseract tessdata language directory")
     parser.add_argument("--no-page-images", action="store_true",
                         help="Skip PDF screenshots to save disk space; limits image-based tutoring")
     parser.add_argument("--force", action="store_true",
                         help="Replace existing imported source and generated brief")
     args = parser.parse_args()
     try:
+        if args.ocr and args.lecture.suffix.lower() != ".pdf":
+            raise ValueError("--ocr is supported for PDF files only")
         notes, brief, metrics, warnings = prepare(
             args.lecture.expanduser(), args.notes, args.briefs,
-            not args.no_page_images, args.force
+            not args.no_page_images, args.force,
+            ocr=args.ocr, ocr_language=args.ocr_lang, tessdata=args.tessdata
         )
         validation = inspect(notes, args.lecture.expanduser())
         validation_dir = args.validation or (args.briefs.parent / "validation")

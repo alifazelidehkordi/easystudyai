@@ -30,7 +30,8 @@ def tidy(value: str) -> str:
     return (value or "").replace("\x00", "").replace("\r\n", "\n").strip()
 
 
-def read_pdf(source: Path, assets: Path, render_pages: bool):
+def read_pdf(source: Path, assets: Path, render_pages: bool, ocr: bool = False,
+             ocr_language: str = "eng", tessdata: str | None = None):
     try:
         import pymupdf
     except ImportError as exc:
@@ -41,9 +42,33 @@ def read_pdf(source: Path, assets: Path, render_pages: bool):
             raise RuntimeError("Encrypted PDF: unlock a permitted copy first")
         for number, page in enumerate(pdf, 1):
             text = tidy(page.get_text("text", sort=True))
-            chunk = [f"## Page {number}", "", text or "[No selectable text: check scanned page image.]"]
+            ocr_used = False
+            if not text and ocr:
+                try:
+                    ocr_page = page.get_textpage_ocr(
+                        language=ocr_language, dpi=180, full=True, tessdata=tessdata
+                    )
+                    text = tidy(page.get_text("text", textpage=ocr_page))
+                    ocr_used = True
+                except Exception as exc:
+                    raise RuntimeError(
+                        "Local OCR failed. Install Tesseract language data for "
+                        f"{ocr_language!r}, set TESSDATA_PREFIX or pass --tessdata. "
+                        "No cloud OCR or API was called."
+                    ) from exc
+            chunk = [f"## Page {number}", ""]
+            if ocr_used:
+                chunk += ["[LOCAL OCR TRANSCRIPTION — UNVERIFIED: check original page]", ""]
+                warnings.append(
+                    f"Page {number}: local OCR transcription; verify every medical term, "
+                    "number and diagram label against page image"
+                )
+            chunk += [text or "[No selectable text: check scanned page image.]"]
             if not text:
-                warnings.append(f"Page {number}: no text layer; OCR not performed")
+                warnings.append(
+                    f"Page {number}: no extracted text"
+                    + (" after local OCR" if ocr else "; OCR not performed")
+                )
             if render_pages:
                 assets.mkdir(parents=True, exist_ok=True)
                 filename = f"page-{number:04}.png"
@@ -164,10 +189,14 @@ def read_docx(source: Path, assets: Path):
     ]
 
 
-def convert(source: Path, destination: Path, render_pages: bool, overwrite: bool):
+def convert(source: Path, destination: Path, render_pages: bool, overwrite: bool,
+            ocr: bool = False, ocr_language: str = "eng",
+            tessdata: str | None = None):
     if not source.is_file():
         raise ValueError(f"File not found: {source}")
     ext = source.suffix.lower()
+    if ocr and ext != ".pdf":
+        raise ValueError("Local OCR is supported for PDF files only")
     if ext not in {".pdf", ".pptx", ".docx", ".txt", ".md"}:
         raise ValueError(f"Unsupported file type: {ext}")
     destination.mkdir(parents=True, exist_ok=True)
@@ -177,7 +206,10 @@ def convert(source: Path, destination: Path, render_pages: bool, overwrite: bool
         raise ValueError(f"Already imported: {output} (use --force to replace)")
     assets = destination / "assets" / stem
     if ext == ".pdf":
-        sections, warnings = read_pdf(source, assets, render_pages)
+        sections, warnings = read_pdf(
+            source, assets, render_pages, ocr=ocr,
+            ocr_language=ocr_language, tessdata=tessdata
+        )
     elif ext == ".pptx":
         sections, warnings = read_pptx(source, assets)
     elif ext == ".docx":
@@ -207,10 +239,19 @@ def main():
     parser.add_argument("file", type=Path)
     parser.add_argument("--output", type=Path, default=Path("course/processed"))
     parser.add_argument("--render-pages", action="store_true", help="Render every PDF page as PNG")
+    parser.add_argument("--ocr", action="store_true",
+                        help="Opt-in LOCAL Tesseract OCR for PDF pages with no text layer")
+    parser.add_argument("--ocr-lang", default="eng",
+                        help="Installed Tesseract language pack (default: eng)")
+    parser.add_argument("--tessdata", default=None,
+                        help="Local Tesseract tessdata directory, if auto-discovery fails")
     parser.add_argument("--force", action="store_true", help="Replace existing Markdown")
     args = parser.parse_args()
     try:
-        output, n, warnings = convert(args.file.expanduser(), args.output, args.render_pages, args.force)
+        output, n, warnings = convert(
+            args.file.expanduser(), args.output, args.render_pages, args.force,
+            ocr=args.ocr, ocr_language=args.ocr_lang, tessdata=args.tessdata
+        )
         print(f"Imported {n} section(s) to {output}; warnings: {len(warnings)}")
         for warning in warnings:
             print("CHECK:", warning)

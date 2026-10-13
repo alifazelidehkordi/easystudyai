@@ -31,11 +31,14 @@ def audit(path: Path) -> dict:
     pages_without_text = []
     low_text = []
     scan_warnings = []
+    ocr_sections = []
     count_by_kind = {}
     for n, anchor in enumerate(sections):
         name = anchor.group(1)
         end = sections[n + 1].start() if n + 1 < len(sections) else len(body)
         block = body[anchor.end():end]
+        if "LOCAL OCR TRANSCRIPTION — UNVERIFIED" in block:
+            ocr_sections.append(name)
         figure_links = list(IMAGES.finditer(block))
         count += len(figure_links)
         for match in figure_links:
@@ -66,6 +69,8 @@ def audit(path: Path) -> dict:
         issues.append("No recognizable page/slide/text headings found; reimport or inspect source.")
     if pages_without_text:
         issues.append(f"{len(pages_without_text)} section(s) have no extractable text.")
+    if ocr_sections:
+        issues.append(f"{len(ocr_sections)} local OCR page(s) require human verification of medical terms and numbers.")
     if missing_images:
         issues.append(f"{len(missing_images)} referenced image(s) are missing or unsafe.")
     if original.lower().endswith(".pdf") and not any(
@@ -84,8 +89,9 @@ def audit(path: Path) -> dict:
         "short_sections_to_check": low_text,
         "missing_or_unsafe_images": missing_images,
         "scan_warnings": scan_warnings,
+        "ocr_sections": ocr_sections,
         "issues": issues,
-        "needs_attention": bool(pages_without_text or missing_images or not sections or scan_warnings),
+        "needs_attention": bool(pages_without_text or missing_images or not sections or scan_warnings or ocr_sections),
         "disclaimer": "Technical extraction check only; not a scientific, image-content, or privacy review."
     }
 

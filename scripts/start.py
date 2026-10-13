@@ -25,6 +25,7 @@ def main() -> int:
     parser.add_argument("--lecture", type=Path, help="Your original lecture PDF/PPTX/DOCX/TXT/MD")
     parser.add_argument("--ocr", action="store_true", help="Opt-in local Tesseract OCR for scan-only PDFs")
     parser.add_argument("--ocr-lang", default="eng", help="Installed local Tesseract language pack")
+    parser.add_argument("--tessdata", help="Local Tesseract language-data directory")
     parser.add_argument("--check-only", action="store_true",
                         help="Print launch instructions without starting a model/harness")
     args = parser.parse_args()
@@ -33,9 +34,11 @@ def main() -> int:
     if args.lecture:
         if args.ocr and args.lecture.suffix.lower() != ".pdf":
             parser.error("--ocr only applies to PDF files")
-        command = [sys.executable, str(root / "scripts" / "learn.py"), str(args.lecture.expanduser())]
+        command = [sys.executable, str(root / "scripts" / "learn.py"), str(args.lecture.expanduser().resolve())]
         if args.ocr:
             command += ["--ocr", "--ocr-lang", args.ocr_lang]
+            if args.tessdata:
+                command += ["--tessdata", args.tessdata]
         if args.check_only:
             print("Preparation command:", " ".join(repr(x) for x in command))
         else:

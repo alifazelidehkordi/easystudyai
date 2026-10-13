@@ -1,0 +1,10 @@
+# Local student materials, personal notes and medical images: do not publish
+course/lectures/
+course/processed/
+course/visuals/
+course/sessions/
+.pi/
+.venv/
+__pycache__/
+*.py[cod]
+.DS_Store

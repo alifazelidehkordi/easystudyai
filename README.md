@@ -49,6 +49,20 @@ Then inside Pi: `/md-log course/sessions/cardiac-cycle.md`. The setup copies onl
 
 The original project's code is **not vendored** here (check its rights/terms). Popup functionality depends on the installed Pi version; if unavailable, use chat quizzes and Markdown files without changing the learning logic.
 
+## Try a complete local demo (without uploading any real lecture)
+
+```bash
+python scripts/import_notes.py examples/demo-lecture.txt
+python scripts/search_notes.py "stroke volume"
+python scripts/study.py add --topic "Cardiac output" \
+  --question "What determines cardiac output?" \
+  --answer "Heart rate multiplied by stroke volume" \
+  --source demo-lecture-txt.md --anchor "Source text"
+python scripts/study.py due
+```
+
+Then run `codex` (or `pi`) and request: **"Read AGENTS.md, teach the demo lecture and quiz me. Help me work through my due review cards."** The synthetic demo is not a medical course handout.
+
 ## Import a professor's lecture
 
 Put a lecture into the **ignored** `course/lectures/` directory (create it if necessary) and customize `course/COURSE.md`.

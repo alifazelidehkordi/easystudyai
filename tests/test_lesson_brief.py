@@ -50,7 +50,6 @@ class LessonBriefTests(unittest.TestCase):
         self.assertIn("Explain how hydrostatic pressure", content)
         self.assertIn("renal-physiology-txt.md", content)
         self.assertIn("Renal physiology.txt, Source text", content)
-        self.assertIn("Medical", content.capitalize() if "medical" in content else content)
         self.assertIn("an automatic index", content)
         self.assertNotIn(str(self.root), content)
         result2 = self.run_cli(

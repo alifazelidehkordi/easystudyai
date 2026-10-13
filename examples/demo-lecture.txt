@@ -1,0 +1,11 @@
+# Sample teaching handout — DEMO ONLY
+This is a short, synthetic example written for testing EasyStudyAI. It is NOT a professor's official lecture.
+
+Learning goal: connect stroke volume, heart rate and cardiac output.
+
+Cardiac output is the volume of blood pumped by one ventricle per minute.
+Cardiac output = heart rate × stroke volume (CO = HR × SV).
+Heart rate is the number of beats per minute.
+Stroke volume is the volume ejected by one ventricle per beat.
+
+This is a simple physiology teaching example; consult your own lecture for exam-specific material.

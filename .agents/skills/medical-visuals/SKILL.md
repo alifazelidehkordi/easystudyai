@@ -7,7 +7,7 @@ description: Incorporate source-attributed, medically checked anatomical/histolo
 
 Choose images for genuine learning needs: spatial anatomy, microscopic patterns, disease morphology, imaging orientation, dynamic processes, clinical decision trees.
 
-1. **First** reuse figures already in the professor's lecture, keeping their page/slide reference. If source extraction omitted a figure, review/render the original page.
+1. **First** run `python scripts/figures.py --query "topic"` to find any imported lecture images or page renders. View and reuse appropriate figures already in the professor's lecture, keeping their verified page/slide reference. The script indexes file links, not visual meaning. If extraction omitted a figure, review/render the original page.
 2. **Next** consider original schematic Mermaid diagrams for processes or causal mechanisms; label these "schematic", not as clinical photographs. Diagram edges, legends, laterality and scales require checking.
 3. **Then**, if permitted, use the harness's normal browser/research abilities to locate external images from reputable sources such as Wikimedia Commons (license-specific), institutional teaching sites or open-access atlases. Never assume a web image is reusable.
 4. Add an already downloaded file with `python scripts/add_image.py --file /path/to/image.png --title "..." --source-url "https://..." --creator "..." --license "..." `. This local tool is offline; the student/assistant must confirm both source/terms and medical accuracy before use.

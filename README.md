@@ -10,6 +10,34 @@
 - **Retention.** Persist questions sourced to exact lecture pages/slides in a simple, fully local spaced review queue; the tutor must use real learner answers to schedule revisions.
 - **Optional Pi UI.** Interactive quizzes and Obsidian-style session log extension from the *original* repository, fetched explicitly by the user, not bundled or hardwired.
 
+## Simplest way to start (Pi or Codex, no model API)
+
+After installing [Codex CLI](https://github.com/openai/codex) or [Pi](https://pi.dev/docs/latest/quickstart), clone the repository and run a single local command:
+
+```bash
+git clone https://github.com/alifazelidehkordi/easystudyai.git
+cd easystudyai
+python -m pip install -r requirements.txt
+
+# Check setup without signing in or accessing the network
+python scripts/doctor.py
+
+# Launch your installed Codex CLI with subscription sign-in
+python scripts/start.py
+
+# Or launch Pi with your existing Codex subscription
+python scripts/start.py --harness pi
+
+# Import a real professor lecture, then launch Codex
+python scripts/start.py --lecture "course/lectures/My lecture.pdf"
+```
+
+Only the selected harness handles model authentication. Choose **Sign in with ChatGPT/OpenAI Codex**, not an API key. Existing subscription limits still apply. The local scripts do not authenticate or make model API requests.
+
+For a scan-only PDF, you can **opt in** to local Tesseract OCR by adding `--ocr`. It is disabled by default, requires locally installed Tesseract language data, and every OCR result is marked **unverified**; medical doses, units, terminology and labels must be checked against the page snapshots.
+
+A copy of your professor's original file remains local; importing it does not itself upload it. When the tutor reads its contents, the material may be sent to the subscribed model service. Do not use real identifiable patient data.
+
 ## Quick start: Codex CLI (simplest)
 
 Install [Codex CLI](https://github.com/openai/codex) using its official instructions. Then:
@@ -70,6 +98,9 @@ Put a real lecture in the ignored `course/lectures/` folder and run:
 ```bash
 mkdir -p course/lectures
 python scripts/learn.py "course/lectures/My lecture.pdf"
+
+# Optional local-only OCR on PDF pages with no selectable text:
+python scripts/learn.py "course/lectures/Scan-only lecture.pdf" --ocr --ocr-lang eng
 ```
 
 This single command runs the offline importer (including PDF page screenshots by default), creates a **technical quality report and integrity checklist** in `course/validation/`, and writes a source-linked plan scaffold to `course/briefs/my-lecture-pdf-brief.md`. The brief includes a page/slide map, short verbatim text previews, image counts, and any **explicit** objectives detected under a literal objectives heading. It does **not** invent learning objectives, interpret your professor's intent, or verify medical facts.
@@ -142,6 +173,9 @@ python scripts/study.py due
 python scripts/study.py reveal CARD_ID
 python scripts/study.py grade CARD_ID --rating good
 python scripts/study.py stats
+
+# Run a whole review session without any UI plugin or model API
+python scripts/study_session.py --limit 12
 ```
 
 The `--source` name is the imported Markdown **basename**, not the original PDF filename; use the filename actually shown in `course/processed/`. Ratings: **again** = review today, **hard** = tomorrow without promotion, **good** = advance one interval, **easy** = advance two. You control the rating. The tutor must not assume you remember a fact simply because it taught you.
@@ -198,11 +232,15 @@ AGENTS.md                        Instructions shared by harnesses
 .agents/skills/teach/SKILL.md    Probe → Plan → Teach
 .agents/skills/medical-sources/  Lecture-based citation and evidence rules
 .agents/skills/medical-visuals/  Image selection, accuracy and attribution rules
-course/COURSE.md                 Your syllabus and learning preferences
+course/COURSE.md                 Public blank syllabus template (avoid personal details)
+course/LOCAL_COURSE.md           Private per-course notes/preferences (gitignored)
 course/lectures/                 Your original lectures (gitignored)
 course/processed/                Searchable imported notes (gitignored)
 course/visuals/                  Medical image library (gitignored)
 course/sessions/                 Lesson logs (gitignored)
+scripts/doctor.py               Offline setup/privacy diagnosis
+scripts/start.py                One-command Codex/Pi launch; optional lecture import
+scripts/study_session.py        Interactive terminal flashcard review
 scripts/learn.py                 One-command import + technical check + teaching brief
 scripts/prepare_lesson.py       Generate page/slide-anchored teaching brief
 course/briefs/                  Private auto-generated lecture maps (gitignored)
@@ -230,6 +268,6 @@ The tests do not need API keys; PDF and slides tests run when the optional docum
 
 ## Important limits
 
-This is a **working development foundation**, not a validated clinical education platform. Generated teaching briefs are navigational indexes, not medically verified summaries. Images and external claims are not medically certified by software. A local interval-based spaced-review scheduler is included; there is no cloud scheduling or reminder service, automatic medical image verifier, image search API, built-in web scraper or OCR yet. External medical pictures still require manual review and a suitable harness/browser. The original professor files stay on your machine; however, the **text/images the AI reads may be sent to the subscribed Codex/ChatGPT service**. Do not include identifiable real patient data. Course content is not clinical advice.
+This is a **working development foundation**, not a validated clinical education platform. Generated teaching briefs are navigational indexes, not medically verified summaries. Images and external claims are not medically certified by software. A local interval-based spaced-review scheduler is included; there is no cloud scheduling or reminder service, automatic medical image verifier, image search API, or built-in web scraper. Local OCR is optional via Tesseract on scan-only PDF pages, and is not a substitute for reading/validating medical figures. External medical pictures still require manual review and a suitable harness/browser. The original professor files stay on your machine; however, the **text/images the AI reads may be sent to the subscribed Codex/ChatGPT service**. Do not include identifiable real patient data. Course content is not clinical advice.
 
 Reference documentation: [Pi skills](https://pi.dev/docs/latest/skills) · [Pi authentication](https://pi.dev/docs/latest/models) · [Codex](https://github.com/openai/codex) · [Original teaching system](https://github.com/amosblomqvist/learn).

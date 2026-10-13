@@ -94,6 +94,7 @@ course/processed/                Searchable imported notes (gitignored)
 course/visuals/                  Medical image library (gitignored)
 course/sessions/                 Lesson logs (gitignored)
 scripts/import_notes.py          Offline lecture converter
+scripts/search_notes.py          Keyword retrieval with page/slide anchors
 scripts/add_image.py             Offline image/citation library helper
 scripts/setup_pi.py              Optional import of upstream Pi UI extensions
 ```

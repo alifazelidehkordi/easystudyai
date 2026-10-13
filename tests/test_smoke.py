@@ -80,6 +80,17 @@ class ImportTests(unittest.TestCase):
             self.assertIn("## Slide 1", output.read_text())
 
 
+class SearchTests(unittest.TestCase):
+    def test_section_search_returns_source_anchor(self):
+        notes = load("search_notes.py")
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "anatomy-pdf.md"
+            source.write_text("# Imported lecture\n\n## Page 1\n\nThe cortex.\n\n## Page 2\n\nThe renal corpuscle filters plasma.")
+            results = notes.search(Path(tmp), "renal corpuscle")
+            self.assertEqual(len(results), 1)
+            self.assertEqual(results[0][2], "Page 2")
+
+
 class VisualTests(unittest.TestCase):
     def test_local_image_copy_and_credit(self):
         add = load("add_image.py")

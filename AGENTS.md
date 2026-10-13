@@ -4,7 +4,7 @@ This repository is a **personal medical-school learning environment**, not a cli
 
 ## Before teaching
 1. Read `course/COURSE.md`; identify the lecture the learner wants.
-2. Read the matching `course/processed/*.md` and relevant original lecture file in `course/lectures/` where supported. If missing, run `python scripts/import_notes.py course/lectures/<file>`. Read images/page renderings when possible.
+2. Find relevant lecture sections with `python scripts/search_notes.py "topic"` and read matching `course/processed/*.md` around those anchors, plus the original lecture in `course/lectures/` where supported. If no import exists, run `python scripts/import_notes.py course/lectures/<file>`. Read original images/page renderings when possible.
 3. Load `.agents/skills/teach/SKILL.md` and, where appropriate, `medical-sources` and `medical-visuals`.
 4. Follow **Probe → Plan → Teach**: locate what the student knows, show a short personalized plan, then teach interactively, checking each step. Keep quizzes useful and avoid excessively long diagnostics.
 5. Cite lecture pages/slides/paragraphs accurately. Do not claim material is in the lecture unless observed there. Distinguish **COURSE NOTE**, **VERIFIED EXTERNAL SOURCE**, and **EXPLANATORY EXAMPLE**. Highlight gaps or disagreements.

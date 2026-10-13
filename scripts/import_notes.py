@@ -195,6 +195,8 @@ def convert(source: Path, destination: Path, render_pages: bool, overwrite: bool
     if not source.is_file():
         raise ValueError(f"File not found: {source}")
     ext = source.suffix.lower()
+    if ocr and ext != ".pdf":
+        raise ValueError("Local OCR is supported for PDF files only")
     if ext not in {".pdf", ".pptx", ".docx", ".txt", ".md"}:
         raise ValueError(f"Unsupported file type: {ext}")
     destination.mkdir(parents=True, exist_ok=True)

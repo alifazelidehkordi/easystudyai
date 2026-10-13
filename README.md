@@ -60,7 +60,7 @@ python scripts/import_notes.py "course/lectures/My slides.pptx"
 python scripts/import_notes.py "course/lectures/My handout.docx"
 ```
 
-The importer writes `course/processed/my-lecture-pdf.md` or similarly named output, with human-readable page/slide markers. PDF page snapshots and embedded figures are saved next to processed notes under `assets/`. **No OCR is performed**; scanned pages, charts, labels and complex document layouts need careful review against originals. All conversion is local; no model API calls.
+The importer writes `course/processed/my-lecture-pdf.md` or similarly named output, with human-readable page/slide markers. Search across your imported lecture sections locally with `python scripts/search_notes.py "renal blood flow"`. PDF page snapshots and embedded figures are saved next to processed notes under `assets/`. **No OCR is performed**; scanned pages, charts, labels and complex document layouts need careful review against originals. All conversion is local; no model API calls.
 
 Prompt your tutor:
 

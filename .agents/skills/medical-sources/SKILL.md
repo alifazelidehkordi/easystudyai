@@ -5,7 +5,7 @@ description: Use professor notes as primary syllabus, trace medical claims to sl
 
 # Medical-source discipline
 
-1. Read `course/COURSE.md` and the relevant `course/processed/*.md` file. Imports are searchable caches; check original files when figures/tables, headings or text extraction are ambiguous.
+1. Read `course/COURSE.md`, locate relevant passages with `python scripts/search_notes.py "key terms"`, then read their context in `course/processed/*.md`. Imports are searchable caches; check original files when figures/tables, headings or text extraction are ambiguous.
 2. Cite course statements as `(LectureName.pdf, p. 4)`, `(LectureName.pptx, slide 7)`, or `(Handout.docx, paragraph 12)`. Only use anchors actually present. Never invent references.
 3. Record provenance of each nontrivial claim:
    - **COURSE NOTE**: lecturer-provided material and exact location. Sets learning/exam scope.

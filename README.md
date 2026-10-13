@@ -72,7 +72,7 @@ mkdir -p course/lectures
 python scripts/learn.py "course/lectures/My lecture.pdf"
 ```
 
-This single command runs the offline importer (including PDF page screenshots by default), creates a **technical quality report**, and writes a source-linked plan scaffold to `course/briefs/my-lecture-pdf-brief.md`. The brief includes a page/slide map, short verbatim text previews, image counts, and any **explicit** objectives detected under a literal objectives heading. It does **not** invent learning objectives, interpret your professor's intent, or verify medical facts.
+This single command runs the offline importer (including PDF page screenshots by default), creates a **technical quality report and integrity checklist** in `course/validation/`, and writes a source-linked plan scaffold to `course/briefs/my-lecture-pdf-brief.md`. The brief includes a page/slide map, short verbatim text previews, image counts, and any **explicit** objectives detected under a literal objectives heading. It does **not** invent learning objectives, interpret your professor's intent, or verify medical facts.
 
 Then launch `codex` or `pi` using your existing subscription and ask:
 
@@ -123,7 +123,7 @@ python scripts/figures.py --query "renal cortex"
 python scripts/figures.py --json --limit 15
 ```
 
-**Important:** This indexes Markdown image links, not the actual visual meaning of an image. Search matches text on the same page/slide; the assistant must **look at the original image** before using it to teach. PowerPoint grouped shapes, charts and scanned images may require manual inspection.
+**Important:** This indexes Markdown image links, not the actual visual meaning of an image. Search matches text on the same page/slide; the assistant must **look at the original image** before using it to teach. PowerPoint grouped shapes and speaker notes are extracted where supported; charts/SmartArt, exact positioning, and scanned images still require original-slide inspection.
 
 ## Review what you learned across sessions
 
@@ -208,6 +208,8 @@ scripts/prepare_lesson.py       Generate page/slide-anchored teaching brief
 course/briefs/                  Private auto-generated lecture maps (gitignored)
 scripts/import_notes.py          Offline lecture converter
 scripts/audit_lecture.py         Flag scan-only pages or broken embedded images
+scripts/validate_lecture.py      Compare original checksum/pages + image/text completeness
+course/validation/              Private manual verification reports (gitignored)
 scripts/search_notes.py          Keyword retrieval with page/slide anchors
 scripts/figures.py               Find local figures/page snapshots by slide/page
 scripts/visual_requests.py       Request → search link → attach → review → embed

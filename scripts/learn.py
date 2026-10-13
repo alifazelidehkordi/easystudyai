@@ -11,6 +11,7 @@ from pathlib import Path
 
 from import_notes import convert
 from prepare_lesson import create_brief
+from validate_lecture import inspect, report_markdown
 
 
 def prepare(file: Path, notes: Path, briefs: Path, render_pages: bool = True,
@@ -31,6 +32,7 @@ def main() -> int:
     parser.add_argument("lecture", type=Path, help="Original PDF, PPTX, DOCX, TXT or MD")
     parser.add_argument("--notes", type=Path, default=Path("course/processed"))
     parser.add_argument("--briefs", type=Path, default=Path("course/briefs"))
+    parser.add_argument("--validation", type=Path, help="Report folder (default: alongside briefs)")
     parser.add_argument("--no-page-images", action="store_true",
                         help="Skip PDF screenshots to save disk space; limits image-based tutoring")
     parser.add_argument("--force", action="store_true",
@@ -41,13 +43,19 @@ def main() -> int:
             args.lecture.expanduser(), args.notes, args.briefs,
             not args.no_page_images, args.force
         )
+        validation = inspect(notes, args.lecture.expanduser())
+        validation_dir = args.validation or (args.briefs.parent / "validation")
+        validation_dir.mkdir(parents=True, exist_ok=True)
+        validation_path = validation_dir / (notes.stem + "-validation.md")
+        validation_path.write_text(report_markdown(validation), encoding="utf-8")
         print("Imported notes:", notes)
         print("Teaching brief:", brief)
+        print("Verification checklist:", validation_path)
         print("Sections:", metrics["sections"])
-        if warnings or metrics["no_text_sections"] or metrics["missing_visuals"]:
+        if validation["blocking_issues"] or warnings:
             print("Extraction needs attention. Inspect original pages before teaching.")
-            for warning in warnings[:7]:
-                print("CHECK:", warning)
+            for item in validation["blocking_issues"][:7] + warnings[:7]:
+                print("CHECK:", item)
         print()
         print("Next: start codex or pi in this repository using your subscription.")
         print(

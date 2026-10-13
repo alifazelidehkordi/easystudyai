@@ -59,33 +59,59 @@ def read_pptx(source: Path, assets: Path):
         from pptx.enum.shapes import MSO_SHAPE_TYPE
     except ImportError as exc:
         raise RuntimeError("PowerPoint support requires pip install -r requirements.txt") from exc
+
     sections, warnings = [], []
-    for n, slide in enumerate(Presentation(str(source)).slides, 1):
-        lines = [f"## Slide {n}", ""]
-        images = 0
-        for shape in slide.shapes:
+
+    def visit_shapes(shapes, slide_number: int, lines: list[str], counter: list[int]):
+        """Walk text, tables and pictures, including many grouped shapes."""
+        for shape in shapes:
+            if shape.shape_type == MSO_SHAPE_TYPE.GROUP:
+                visit_shapes(shape.shapes, slide_number, lines, counter)
+                continue
             if shape.has_text_frame and tidy(shape.text):
                 lines.extend([tidy(shape.text), ""])
             if shape.has_table:
-                for row in shape.table.rows:
-                    lines.append(" | ".join(tidy(cell.text).replace("\n", " ") for cell in row.cells))
-                lines.append("")
+                rows = [
+                    [tidy(cell.text).replace("\n", " ").replace("|", "\\|") for cell in row.cells]
+                    for row in shape.table.rows
+                ]
+                if rows:
+                    lines.append("| " + " | ".join(rows[0]) + " |")
+                    lines.append("| " + " | ".join(["---"] * len(rows[0])) + " |")
+                    lines.extend("| " + " | ".join(row) + " |" for row in rows[1:])
+                    lines.append("")
+            if shape.has_chart:
+                # Charts may rely on colors/legends and embedded worksheets:
+                # presenting bare numbers as a faithful image would be unsafe.
+                lines.extend(["[Chart object: inspect original slide for axes, legend and units.]", ""])
+                warnings.append(f"Slide {slide_number}: chart is not rendered/extracted")
             if shape.shape_type == MSO_SHAPE_TYPE.PICTURE:
                 ext = shape.image.ext.lower()
                 if ext not in {"png", "jpg", "jpeg", "webp", "gif"}:
-                    warnings.append(f"Slide {n}: skipped image type {ext}")
+                    warnings.append(f"Slide {slide_number}: skipped image type {ext}")
                     continue
-                images += 1
+                counter[0] += 1
                 assets.mkdir(parents=True, exist_ok=True)
-                filename = f"slide-{n:04}-figure-{images:02}.{ext}"
+                filename = f"slide-{slide_number:04}-figure-{counter[0]:02}.{ext}"
                 (assets / filename).write_bytes(shape.image.blob)
-                lines.extend([f"![Original figure, slide {n}](assets/{assets.name}/{filename})", ""])
+                lines.extend([f"![Original figure, slide {slide_number}](assets/{assets.name}/{filename})", ""])
+
+    for n, slide in enumerate(Presentation(str(source)).slides, 1):
+        lines = [f"## Slide {n}", ""]
+        visit_shapes(slide.shapes, n, lines, [0])
+        if slide.has_notes_slide:
+            notes_frame = slide.notes_slide.notes_text_frame
+            notes = tidy(notes_frame.text if notes_frame is not None else "")
+            if notes:
+                lines.extend([f"### Speaker notes (slide {n}; not visible on slide)", "", notes, ""])
         if len(lines) <= 2:
             lines.append("[No readable text/inline figure; inspect original slide.]")
         sections.append("\n".join(lines) + "\n")
-    warnings.append("Slide layouts, groups and diagrams may not survive extraction: inspect original slides.")
+    warnings.append(
+        "PowerPoint SmartArt, charts, groups, positioning and notes may not faithfully "
+        "survive extraction: always inspect the original slides."
+    )
     return sections, warnings
-
 
 def read_docx(source: Path, assets: Path):
     try:
@@ -95,15 +121,28 @@ def read_docx(source: Path, assets: Path):
         raise RuntimeError("Word support requires pip install -r requirements.txt") from exc
     document = Document(source)
     chunks = ["## Document", ""]
-    for n, paragraph in enumerate(document.paragraphs, 1):
-        text = tidy(paragraph.text)
-        if text:
-            chunks.extend([f"Paragraph {n}: {text}", ""])
-    for n, table in enumerate(document.tables, 1):
-        chunks.extend([f"### Table {n}", ""])
-        for row in table.rows:
-            chunks.append(" | ".join(tidy(cell.text).replace("\n", " ") for cell in row.cells))
-        chunks.append("")
+    # Preserve the interleaving of Word paragraphs and tables. Printed page
+    # numbers are not available from DOCX text alone.
+    from docx.table import Table
+    from docx.text.paragraph import Paragraph
+
+    para_index = 0
+    table_index = 0
+    for block in document.iter_inner_content():
+        if isinstance(block, Paragraph):
+            para_index += 1
+            text = tidy(block.text)
+            if text:
+                chunks.extend([f"Paragraph {para_index}: {text}", ""])
+        elif isinstance(block, Table):
+            table_index += 1
+            chunks.extend([f"### Table {table_index}", ""])
+            for row in block.rows:
+                chunks.append(" | ".join(
+                    tidy(cell.text).replace("\n", " ").replace("|", "\\|")
+                    for cell in row.cells
+                ))
+            chunks.append("")
     # Images may be attached outside the paragraph sequence.
     seen = set()
     for part in document.part.related_parts.values():

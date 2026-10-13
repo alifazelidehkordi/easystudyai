@@ -5,7 +5,7 @@ description: Trace medical claims to actual professor pages and check lecture im
 
 # Medical-source discipline
 
-1. Read `course/COURSE.md`. Before using an imported lecture, run `python scripts/audit_lecture.py course/processed/LECTURE.md`. It checks missing figures and text-layer gaps, not medical validity. Scanned pages, abbreviated text and complex charts require opening the original page/slide; never silently treat an incomplete text import as the whole lecture.
+1. Read `course/COURSE.md`. Before using an imported lecture, read its matching `course/validation/LECTURE-validation.md`; regenerate with `python scripts/validate_lecture.py course/processed/LECTURE.md --original course/lectures/ORIGINAL` when available. Otherwise run `python scripts/audit_lecture.py course/processed/LECTURE.md`. It checks missing figures and text-layer gaps, not medical validity. Scanned pages, abbreviated text and complex charts require opening the original page/slide; never silently treat an incomplete text import as the whole lecture.
 2. Locate relevant passages with `python scripts/search_notes.py "key terms"`, then read the full sections and, where needed, corresponding PDF/PowerPoint/Word originals.
 3. Cite course statements as `(LectureName.pdf, p. 4)`, `(LectureName.pptx, slide 7)`, or `(Handout.docx, paragraph 12)`. Only use anchors actually present; DOCX extractor paragraph numbers are not printed pages. Never invent references.
 4. Record provenance of each nontrivial claim:

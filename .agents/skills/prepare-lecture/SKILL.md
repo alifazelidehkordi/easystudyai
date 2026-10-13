@@ -15,7 +15,7 @@ Run:
 python scripts/learn.py "course/lectures/Original lecture.pdf"
 ```
 
-This imports the file, renders PDF page pictures by default, runs a technical import check, and creates `course/briefs/<import-name>-brief.md` and `course/validation/<import-name>-validation.md`. For huge PDFs where page screenshots are not useful, add `--no-page-images`. To intentionally regenerate stale files use `--force`, not silent overwrite.
+This imports the file, renders PDF page pictures by default, runs a technical import check, and creates `course/briefs/<import-name>-brief.md` and `course/validation/<import-name>-validation.md`. For scan-only PDFs, ask before opting into **local** Tesseract OCR with `--ocr --ocr-lang eng`; mark all OCR text unverified and confirm medical names, numbers and labels against page images. For huge PDFs where page screenshots are not useful, add `--no-page-images`. To intentionally regenerate stale files use `--force`, not silent overwrite.
 
 ## When a lecture is already imported
 
@@ -24,7 +24,7 @@ Run `python scripts/prepare_lesson.py course/processed/<lecture>.md`. Do not inv
 ## Verify and teach
 
 1. Read both the generated brief and validation report, then the **full relevant source sections** and original diagrams in the lecture. A brief is only a navigational scaffold: its first lines and excerpts are not a medical summary.
-2. Review the generated validation and audit warnings. Technical status `no_blockers_detected` does **not** mean medically verified. If scan-only pages, tables, absent figures or poor OCR/text extraction are flagged, say which source sections are incomplete and inspect the actual PDF/slides before asserting what they contain.
+2. Review the generated validation and audit warnings, including the explicit `ocr_sections_needing_review` flag. Technical status `no_blockers_detected` does **not** mean medically verified. If scan-only pages, tables, absent figures or poor OCR/text extraction are flagged, say which source sections are incomplete and inspect the actual PDF/slides before asserting what they contain.
 3. Only treat explicit bullet-style objectives found under an objectives heading as **quoted professor objectives**. Anything else is a proposed learning goal, clearly labeled as AI-inferred until the learner confirms.
 4. Use the real course goals and the student's knowledge to build a short dependency teaching plan. Present it and wait for approval for a substantial session.
 5. Use `medical-sources`, `medical-visuals` and `review` for citations, vetted images and later revision.

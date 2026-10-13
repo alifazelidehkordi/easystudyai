@@ -1,17 +1,55 @@
 ---
 name: medical-visuals
-description: Incorporate source-attributed, medically checked anatomical/histological/physiological visuals and simple explanatory diagrams when they improve learning.
+description: Find and review lecturer figures and supplementary anatomy, histology, physiology, pathology or imaging pictures in a no-API, source-anchored medical study workflow.
 ---
 
-# Medical visuals
+# Medical visuals — source first, reviewed, never invented
 
-Choose images for genuine learning needs: spatial anatomy, microscopic patterns, disease morphology, imaging orientation, dynamic processes, clinical decision trees.
+**Only add a visual when it makes the concept clearer.** Medical visuals are scientifically consequential: laterality, stain, labels, scale, diagnosis, licensing and patient privacy need care.
 
-1. **First** run `python scripts/figures.py --query "topic"` to find any imported lecture images or page renders. View and reuse appropriate figures already in the professor's lecture, keeping their verified page/slide reference. The script indexes file links, not visual meaning. If extraction omitted a figure, review/render the original page.
-2. **Next** consider original schematic Mermaid diagrams for processes or causal mechanisms; label these "schematic", not as clinical photographs. Diagram edges, legends, laterality and scales require checking.
-3. **Then**, if permitted, use the harness's normal browser/research abilities to locate external images from reputable sources such as Wikimedia Commons (license-specific), institutional teaching sites or open-access atlases. Never assume a web image is reusable.
-4. Add an already downloaded file with `python scripts/add_image.py --file /path/to/image.png --title "..." --source-url "https://..." --creator "..." --license "..." `. This local tool is offline; the student/assistant must confirm both source/terms and medical accuracy before use.
-5. Store images under `course/visuals/`; provide Markdown image reference, caption, external link and creator/license. Image files must not be copied into public commits automatically.
-6. Do **not** generate a fake X-ray, histology slide, CT, pathology photograph, or anatomical atlas labeled as authentic. If uncertain about stain, view, magnification, structure or rights, omit rather than mislabel.
+## Decision order
 
-Source credibility, citation and accuracy are more important than quantity of visuals.
+1. **The actual lecture.** Start with `python scripts/figures.py --query "topic"` and open the returned image or slide. Cite the original lecture and exact anchor. The tool indexes Markdown links, not meaning, and you must visually inspect.
+2. **A true explanatory schematic.** For processes and causal flows, prefer a small Mermaid diagram, verified arrow-by-arrow. Label it *educational schematic*; never present synthetic radiology/microscopy/pathology as authentic.
+3. **An external educational visual, only when needed.** First create a grounded need tied to the original lecturer page:
+
+```sh
+python scripts/visual_requests.py request \
+  --source renal-pdf.md --anchor "Page 4" \
+  --topic "normal renal corpuscle PAS histology" \
+  --kind histology --reason "Need a comparison of glomerulus and surrounding tubules"
+```
+
+The request must cite an actual `course/processed/*.md` source and existing page/slide heading. `visual_requests.py search --query "..."` returns an ordinary browser URL to the Wikimedia Commons image-search page. **The script does not fetch results, call an image or AI API, or rank scientific credibility**.
+
+If your harness supports normal browsing, follow the link and inspect the candidate file description, original metadata and license. If not, give the learner the link and explain that research and download are manual. Never hallucinate a picture filename or a source attribution.
+
+## Attach, review, use
+
+After obtaining the image with permission, record the original source page, actual creator and actual license:
+
+```sh
+python scripts/visual_requests.py attach REQUEST_ID \
+  --file /path/to/downloaded.png \
+  --title "Renal corpuscle, PAS stain" \
+  --source-url "https://the-real-source-page" \
+  --creator "Exact credited creator" --license "Exact published license"
+```
+
+This starts with status **attached / not approved**. Confirm orientation, image type, stain/scale/labels, educational relevance, identifiable-patient risk, license permissions and attribution conditions. **Only after real human review**, use:
+
+```sh
+python scripts/visual_requests.py approve REQUEST_ID --checked-medical --checked-rights
+python scripts/visual_requests.py embed REQUEST_ID
+```
+
+The flags record human attestations and do not independently certify medical accuracy. The approved embed preserves creator/license/source and labels the image as **external supplementary**, not a slide from the professor. Images and request ledger are private via gitignore.
+
+When unsure, give a **text explanation plus the unapproved candidate link** rather than embed a questionable image. Keep existing `scripts/add_image.py` for simple local cataloging outside the request workflow, but prefer `visual_requests.py` when teaching from a specific lecture.
+
+## Special cautions
+- Anatomy: check correct anatomical structures, labels, laterality and the view.
+- Histology/pathology: check staining, disease vs normal distinction and magnification.
+- Radiology: check imaging modality, orientation, phase and label accuracy.
+- Do not use protected patient images or assume online availability means reuse rights.
+- A missing figure is preferable to a wrong picture.

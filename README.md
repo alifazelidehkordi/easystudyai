@@ -4,7 +4,7 @@
 
 - **No additional paid AI API or API keys.** Use the ChatGPT/Codex subscription login in Pi or Codex CLI. Subscription usage limits apply.
 - **Portable.** `AGENTS.md` plus `.agents/skills/` works without a custom backend. Both Pi and Codex can discover these skills; other harnesses can read the same files.
-- **Professor notes first.** Local PDF, PowerPoint, Word and text import, with page/slide references and saved embedded figures.
+- **Professor notes first.** One-command import and lesson briefing for local PDF, PowerPoint, Word and text notes, with anchored page/slide maps and saved source figures.
 - **Probe → Plan → Teach.** One concept at a time, interactive recall and clinically relevant explanations, with source labels.
 - **Visual learning.** Find professor figures first; create source-anchored requests for external images, then require real medical and licensing review before an approved embed. All scripts operate without AI/image APIs.
 - **Retention.** Persist questions sourced to exact lecture pages/slides in a simple, fully local spaced review queue; the tutor must use real learner answers to schedule revisions.
@@ -62,6 +62,31 @@ python scripts/study.py due
 ```
 
 Then run `codex` (or `pi`) and request: **"Read AGENTS.md, teach the demo lecture and quiz me. Help me work through my due review cards."** The synthetic demo is not a medical course handout.
+
+## One-command lecture preparation (recommended)
+
+Put a real lecture in the ignored `course/lectures/` folder and run:
+
+```bash
+mkdir -p course/lectures
+python scripts/learn.py "course/lectures/My lecture.pdf"
+```
+
+This single command runs the offline importer (including PDF page screenshots by default), creates a **technical quality report**, and writes a source-linked plan scaffold to `course/briefs/my-lecture-pdf-brief.md`. The brief includes a page/slide map, short verbatim text previews, image counts, and any **explicit** objectives detected under a literal objectives heading. It does **not** invent learning objectives, interpret your professor's intent, or verify medical facts.
+
+Then launch `codex` or `pi` using your existing subscription and ask:
+
+> Read AGENTS.md and the new teaching brief in course/briefs. Check the relevant full source notes and original figures, quiz my current knowledge, then propose a lecture plan. Teach me one step at a time and save source-linked revision questions.
+
+You can use `--no-page-images` to save disk space when importing a long PDF, or `--force` to intentionally regenerate the import and brief. The new files, original lectures and study history are all excluded from Git commits.
+
+If the lecture is already imported, you can generate just the brief:
+
+```bash
+python scripts/prepare_lesson.py course/processed/my-lecture-pdf.md
+```
+
+All these scripts are local document processing only. **The interactive AI tutor still runs inside Pi/Codex with your ChatGPT/Codex subscription, not a separate API.**
 
 ## Import a professor's lecture
 
@@ -178,6 +203,9 @@ course/lectures/                 Your original lectures (gitignored)
 course/processed/                Searchable imported notes (gitignored)
 course/visuals/                  Medical image library (gitignored)
 course/sessions/                 Lesson logs (gitignored)
+scripts/learn.py                 One-command import + technical check + teaching brief
+scripts/prepare_lesson.py       Generate page/slide-anchored teaching brief
+course/briefs/                  Private auto-generated lecture maps (gitignored)
 scripts/import_notes.py          Offline lecture converter
 scripts/audit_lecture.py         Flag scan-only pages or broken embedded images
 scripts/search_notes.py          Keyword retrieval with page/slide anchors
@@ -200,6 +228,6 @@ The tests do not need API keys; PDF and slides tests run when the optional docum
 
 ## Important limits
 
-This is an **initial working foundation**, not a validated clinical education platform. Images and external claims are not medically certified by software. A local interval-based spaced-review scheduler is included; there is no cloud scheduling or reminder service, automatic medical image verifier, image search API, built-in web scraper or OCR yet. External medical pictures still require manual review and a suitable harness/browser. The original professor files stay on your machine; however, the **text/images the AI reads may be sent to the subscribed Codex/ChatGPT service**. Do not include identifiable real patient data. Course content is not clinical advice.
+This is a **working development foundation**, not a validated clinical education platform. Generated teaching briefs are navigational indexes, not medically verified summaries. Images and external claims are not medically certified by software. A local interval-based spaced-review scheduler is included; there is no cloud scheduling or reminder service, automatic medical image verifier, image search API, built-in web scraper or OCR yet. External medical pictures still require manual review and a suitable harness/browser. The original professor files stay on your machine; however, the **text/images the AI reads may be sent to the subscribed Codex/ChatGPT service**. Do not include identifiable real patient data. Course content is not clinical advice.
 
 Reference documentation: [Pi skills](https://pi.dev/docs/latest/skills) · [Pi authentication](https://pi.dev/docs/latest/models) · [Codex](https://github.com/openai/codex) · [Original teaching system](https://github.com/amosblomqvist/learn).

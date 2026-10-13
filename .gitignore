@@ -3,6 +3,7 @@ course/lectures/
 course/processed/
 course/visuals/
 course/sessions/
+course/briefs/
 course/progress.json
 .pi/
 .venv/

@@ -46,6 +46,8 @@ def main() -> int:
                         help="Replace existing imported source and generated brief")
     args = parser.parse_args()
     try:
+        if args.ocr and args.lecture.suffix.lower() != ".pdf":
+            raise ValueError("--ocr is supported for PDF files only")
         notes, brief, metrics, warnings = prepare(
             args.lecture.expanduser(), args.notes, args.briefs,
             not args.no_page_images, args.force,
